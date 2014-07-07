@@ -18,9 +18,7 @@
  */
 package org.wso2.hazelcast;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.GroupConfig;
-import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 
 /**
@@ -32,13 +30,23 @@ public class HzTest {
     public static final String HZ_MAP = "wso2.hztest.map";
 
     public static void main(String[] args) {
+        String localMemberHost = args[0];
+        String localMemberPort = args[1];
+        String remoteMember = args[2];
+
         Config config = new Config();
         GroupConfig groupConfig = config.getGroupConfig();
         groupConfig.setName(DOMAIN);
 
         NetworkConfig nwConfig = config.getNetworkConfig();
-        nwConfig.setPublicAddress("127.0.0.1");
-//        nwConfig.setPort(4001);
+        nwConfig.setPublicAddress(localMemberHost);
+        nwConfig.setPort(Integer.parseInt(localMemberPort));
+
+        JoinConfig join = nwConfig.getJoin();
+        join.getMulticastConfig().setEnabled(false);
+        TcpIpConfig tcpIpConfig = join.getTcpIpConfig();
+        tcpIpConfig.setEnabled(true);
+        tcpIpConfig.addMember(remoteMember);
 
         HazelcastInstance hzInstance = Hazelcast.newHazelcastInstance(config);
         hzInstance.getCluster().addMembershipListener(new MembershipListener() {
