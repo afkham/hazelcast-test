@@ -57,7 +57,7 @@ public class HzTest {
 
         final IMap<String, Long> map = hzInstance.getMap(HZ_MAP);
 
-        /*new Thread() {
+        new Thread() {
 
             String[] keys = {"a", "b", "c", "d", "e", "f"};
             int keyIndex = 0;
@@ -84,7 +84,7 @@ public class HzTest {
                     }
                 }
             }
-        }.start();*/
+        }.start();
 
     }
 }
