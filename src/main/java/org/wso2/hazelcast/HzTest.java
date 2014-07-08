@@ -63,7 +63,7 @@ public class HzTest {
             }
         });
 
-        final IMap<String, Long> map = hzInstance.getMap(HZ_MAP);
+        final IMap<String, TestSerializable> map = hzInstance.getMap(HZ_MAP);
 
         new Thread() {
 
@@ -81,7 +81,10 @@ public class HzTest {
                     System.out.println("Hz map get took " + (System.currentTimeMillis() - start) + "ms");
 
                     start = System.currentTimeMillis();
-                    map.put(keys[keyIndex], System.currentTimeMillis());
+
+                    AnotherTestSerializable anotherTestSerializable = new AnotherTestSerializable(keys[keyIndex], System.currentTimeMillis());
+                    map.put(keys[keyIndex],
+                            new TestSerializable(anotherTestSerializable,keys[keyIndex], System.currentTimeMillis()));
                     System.out.println("Hz map put took " + (System.currentTimeMillis() - start) + "ms");
 
                     keyIndex++;
