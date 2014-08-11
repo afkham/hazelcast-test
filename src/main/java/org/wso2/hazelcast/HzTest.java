@@ -21,18 +21,21 @@ package org.wso2.hazelcast;
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
 
+import java.util.Map;
+
 /**
  * TODO: class level comment
  */
 public class HzTest {
 
-    public static final String DOMAIN = "wso2.hztest.domain";
-    public static final String HZ_MAP = "wso2.hztest.map";
+    private static final String DOMAIN = "wso2.hztest.domain";
+    private static final String HZ_MAP = "wso2.hztest.map";
+    private static IMap<String, TestSerializable> map;
 
-    public static void main(String[] args) {
-        String localMemberHost = args[0];
-        String localMemberPort = args[1];
-        String remoteMember = args[2];
+    public static void init() {
+        String localMemberHost = System.getProperty("localMemberHost", "127.0.0.1");
+        String localMemberPort = System.getProperty("localMemberPort", "4000");
+        String remoteMember = System.getProperty("remoteMember", "127.0.0.1:4000");
 
         Config config = new Config();
         GroupConfig groupConfig = config.getGroupConfig();
@@ -62,40 +65,29 @@ public class HzTest {
                 System.out.println("Member left [" + member.getUuid() + "]: " + member.getInetSocketAddress().toString());
             }
         });
+        map = hzInstance.getMap(HZ_MAP);
+    }
 
-        final IMap<String, TestSerializable> map = hzInstance.getMap(HZ_MAP);
+    public static void cleanup() {
+        long start = System.currentTimeMillis();
+        System.out.println("Started map cleanup...");
+        for (Map.Entry<String, TestSerializable> entry : map.entrySet()) {
+            map.removeAsync(entry.getKey());
+        }
+        System.out.println("Cleanup completed in " + (System.currentTimeMillis() - start) + "ms");
+    }
 
-        new Thread() {
+    public static void putItem(String key) {
+        long start = System.currentTimeMillis();
+        AnotherTestSerializable anotherTestSerializable = new AnotherTestSerializable(key, System.currentTimeMillis());
+        map.set(key,
+                new TestSerializable(anotherTestSerializable, key, System.currentTimeMillis()));
+        System.out.println("Hz map put took " + (System.currentTimeMillis() - start) + "ms");
+    }
 
-            String[] keys = {"a", "b", "c", "d", "e", "f"};
-            int keyIndex = 0;
-
-            @Override
-            public void run() {
-                while (true) {
-                    if (keyIndex >= keys.length) {
-                        keyIndex = 0;
-                    }
-                    long start = System.currentTimeMillis();
-                    System.out.println(keys[keyIndex] + "=" + map.get(keys[keyIndex]));
-                    System.out.println("Hz map get took " + (System.currentTimeMillis() - start) + "ms");
-
-                    start = System.currentTimeMillis();
-
-                    AnotherTestSerializable anotherTestSerializable = new AnotherTestSerializable(keys[keyIndex], System.currentTimeMillis());
-                    map.put(keys[keyIndex],
-                            new TestSerializable(anotherTestSerializable,keys[keyIndex], System.currentTimeMillis()));
-                    System.out.println("Hz map put took " + (System.currentTimeMillis() - start) + "ms");
-
-                    keyIndex++;
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-
+    public static void getItem(String key) {
+        long start = System.currentTimeMillis();
+        System.out.println(key + "=" + map.get(key));
+        System.out.println("Hz map get took " + (System.currentTimeMillis() - start) + "ms");
     }
 }
